@@ -33,8 +33,9 @@
                 <label for="paperNumber" class="block text-sm font-medium text-slate-700">Paper Number</label>
                 <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                     <option value="">-- Select Paper --</option>
-                    <option value="FP8">Final Paper 8</option>
                     <option value="ETP01">Exam Target Paper 01</option>
+                    <option value="26P31">2026 Paper 31</option>
+                    <option value="FP8">Final Paper 8</option>
                 </select>
             </div>
 
@@ -68,7 +69,8 @@
         // --- PASTE YOUR GOOGLE SHEET LINKS HERE ---
         const allPaperData = {
             'FP8': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
-            'ETP01': 'YOUR_NEW_PUBLISHED_LINK_HERE'
+            'ETP01': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
+             '26P31': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv' // <-- PASTE YOUR NEW LINK HERE
         };
         
         const studentIdInput = document.getElementById('studentId');
@@ -158,11 +160,9 @@
             resultDiv.appendChild(card);
         }
 
-        // --- MODIFIED SCAN SUCCESS LOGIC ---
         function onScanSuccess(decodedText, decodedResult) {
             studentIdInput.value = decodedText;
             stopScanner();
-            // This no longer searches automatically. It just tells the user what to do next.
             displayResult('Student ID captured. Click "Find Bucket" to search.', 'success');
         }
         
@@ -184,17 +184,15 @@
             }
         }
         
-        // --- MODIFIED SCANNER START LOGIC ---
         async function startScanner() {
             if (isScannerRunning) {
                 stopScanner();
                 return;
             }
 
-            // This new check ensures a paper is selected BEFORE trying to scan.
             if (!paperNumberSelect.value) {
                 qrStatusDiv.textContent = 'Error: Please select a paper first.';
-                setTimeout(() => { // Clear the message after 3 seconds
+                setTimeout(() => { 
                     if (qrStatusDiv.textContent === 'Error: Please select a paper first.') {
                         qrStatusDiv.textContent = '';
                     }
