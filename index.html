@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Paper Locator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #qr-reader {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            display: none; /* Hidden by default */
+        }
+        .result-card {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4">
+        <h1 class="text-2xl font-bold text-center text-slate-800 mb-2">Student Paper Locator</h1>
+        <p class="text-center text-slate-500 mb-6">Enter details to find the paper bucket.</p>
+
+        <!-- Main Form -->
+        <div class="space-y-4">
+            <div>
+                <label for="paperNumber" class="block text-sm font-medium text-slate-700">Paper Number</label>
+                <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="">-- Select Paper --</option>
+                    <option value="FP8">Final Paper 8</option>
+                    <option value="ETP01">Exam Target Paper 01</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="studentId" class="block text-sm font-medium text-slate-700">Student ID</label>
+                <input type="text" id="studentId" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., 25094271">
+            </div>
+
+            <button id="searchBtn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Find Bucket
+            </button>
+        </div>
+
+        <!-- QR Code Scanner Section -->
+        <div class="mt-6 text-center">
+            <h3 class="text-lg font-medium text-slate-800 border-t pt-4">Scan Student ID</h3>
+            <div id="qr-reader" class="w-full mx-auto mt-2"></div>
+            <div id="qr-status" class="text-sm text-slate-500 mt-2 min-h-[20px]"></div>
+            <button id="scannerBtn" class="w-full mt-2 bg-slate-600 text-white py-2 px-4 rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition duration-150 ease-in-out">
+                Start Scanner
+            </button>
+        </div>
+
+        <!-- Result Display -->
+        <div id="result" class="mt-6 text-center"></div>
+    </div>
+
+    <script>
+        // --- PASTE YOUR GOOGLE SHEET LINKS HERE ---
+        const allPaperData = {
+            'FP8': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
+            'ETP01': 'YOUR_NEW_PUBLISHED_LINK_HERE'
+        };
+        
+        const studentIdInput = document.getElementById('studentId');
+        const paperNumberSelect = document.getElementById('paperNumber');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultDiv = document.getElementById('result');
+        const scannerBtn = document.getElementById('scannerBtn');
+        const qrReaderDiv = document.getElementById('qr-reader');
+        const qrStatusDiv = document.getElementById('qr-status');
+
+        let dataCache = {};
+        let html5QrCode = null;
+        let isScannerRunning = false;
+
+        async function loadData(paper) {
+            if (dataCache[paper]) return dataCache[paper];
+            const url = allPaperData[paper];
+            if (!url || !url.startsWith('https')) {
+                console.error(`Invalid URL for paper "${paper}".`);
+                return null;
+            }
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response failed');
+                const csvText = await response.text();
+                const lines = csvText.trim().replace(/\r/g, "").split('\n');
+                const studentToBucketMap = new Map();
+                if (lines.length < 1) return studentToBucketMap;
+                const buckets = lines[0].split(',').map(b => b.trim());
+                for (let i = 1; i < lines.length; i++) {
+                    const studentIdsInRow = lines[i].split(',').map(id => id.trim());
+                    for (let j = 0; j < buckets.length; j++) {
+                        if (studentIdsInRow[j]) {
+                            studentToBucketMap.set(studentIdsInRow[j], buckets[j]);
+                        }
+                    }
+                }
+                dataCache[paper] = studentToBucketMap;
+                return studentToBucketMap;
+            } catch (error) {
+                console.error('Error fetching/parsing data:', error);
+                return null;
+            }
+        }
+
+        async function findBucket() {
+            const studentId = studentIdInput.value.trim();
+            const paperNumber = paperNumberSelect.value;
+            resultDiv.innerHTML = '';
+            if (!paperNumber) {
+                displayResult('Please select a paper number.', 'error');
+                return;
+            }
+            if (!studentId) {
+                displayResult('Please enter a Student ID.', 'error');
+                return;
+            }
+            displayResult('Searching...', 'loading');
+            const data = await loadData(paperNumber);
+            if (data === null) {
+                displayResult(`Data for paper "${paperNumber}" could not be loaded.`, 'error');
+                return;
+            }
+            const bucket = data.get(studentId);
+            if (bucket) {
+                displayResult(`Student ID: <strong>${studentId}</strong><br>Found in: <span class="text-2xl font-bold text-indigo-600">${bucket}</span>`, 'success');
+            } else {
+                displayResult(`Student ID: <strong>${studentId}</strong> not found.`, 'error');
+            }
+        }
+        
+        function displayResult(message, type) {
+            resultDiv.innerHTML = '';
+            let cardClasses = 'result-card p-4 rounded-lg mt-4 text-center ';
+            switch(type) {
+                case 'success': cardClasses += 'bg-green-100 text-green-800'; break;
+                case 'error': cardClasses += 'bg-red-100 text-red-800'; break;
+                case 'loading': cardClasses += 'bg-blue-100 text-blue-800'; break;
+            }
+            const card = document.createElement('div');
+            card.className = cardClasses;
+            card.innerHTML = message;
+            resultDiv.appendChild(card);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            studentIdInput.value = decodedText;
+            stopScanner();
+            if(paperNumberSelect.value) {
+                findBucket();
+            } else {
+                displayResult('Student ID captured. Please select a paper and search.', 'success');
+            }
+        }
+        
+        function stopScanner() {
+            if (html5QrCode && isScannerRunning) {
+                scannerBtn.disabled = true;
+                html5QrCode.stop().then(() => {
+                    qrReaderDiv.style.display = 'none';
+                    scannerBtn.textContent = 'Start Scanner';
+                    qrStatusDiv.textContent = 'Scanner stopped.';
+                    isScannerRunning = false;
+                }).catch(err => {
+                    console.error("Failed to stop scanner.", err);
+                    qrStatusDiv.textContent = 'Error stopping scanner.';
+                }).finally(() => {
+                    scannerBtn.disabled = false;
+                });
+            }
+        }
+        
+        async function startScanner() {
+            if (isScannerRunning) {
+                stopScanner();
+                return;
+            }
+
+            if (location.protocol !== 'https:') {
+                qrStatusDiv.textContent = 'Error: Camera requires a secure (https) connection.';
+                return;
+            }
+
+            if (!html5QrCode) {
+                 html5QrCode = new Html5Qrcode("qr-reader");
+            }
+
+            scannerBtn.disabled = true;
+            qrStatusDiv.textContent = 'Checking for camera...';
+
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+                if (!cameras || cameras.length === 0) {
+                    throw new Error('No cameras found on this device.');
+                }
+                
+                qrReaderDiv.style.display = 'block';
+                qrStatusDiv.textContent = 'Starting camera... Please grant permission.';
+                
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess,
+                    (errorMessage) => { /* ignore scan failures */ }
+                );
+
+                isScannerRunning = true;
+                scannerBtn.textContent = 'Stop Scanner';
+                qrStatusDiv.textContent = 'Point camera at a QR code.';
+
+            } catch (err) {
+                qrReaderDiv.style.display = 'none';
+                if (String(err).includes('Permission denied') || String(err).includes('NotAllowedError')) {
+                    qrStatusDiv.textContent = 'Error: Camera permission denied. Please check browser settings.';
+                } else {
+                    qrStatusDiv.textContent = `Error: Could not start camera. ${err}`;
+                }
+            } finally {
+                scannerBtn.disabled = false;
+            }
+        }
+
+        searchBtn.addEventListener('click', findBucket);
+        scannerBtn.addEventListener('click', startScanner);
+    </script>
+</body>
+</html>
