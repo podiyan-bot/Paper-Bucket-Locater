@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Paper Locator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- NEW, MORE RELIABLE QR SCANNER LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .result-card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-        
-        /* NEW STYLES FOR THE SCANNER POP-UP (MODAL) */
         #scanner-modal {
             position: fixed;
             top: 0;
@@ -86,7 +83,7 @@
         <div id="result" class="mt-6 text-center"></div>
     </div>
 
-    <!-- NEW SCANNER MODAL -->
+    <!-- Scanner Modal -->
     <div id="scanner-modal">
         <div id="scanner-container">
             <video id="scanner-video"></video>
@@ -95,32 +92,32 @@
         </div>
     </div>
 
+    <!-- SINGLE, CONSOLIDATED SCRIPT SECTION -->
     <script>
+        // --- CONFIGURATION ---
         const allPaperData = {
             'FP8': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
             'ETP01': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
             '26P31': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv'
         };
 
+        // --- ELEMENT REFERENCES ---
         const studentIdInput = document.getElementById('studentId');
         const paperNumberSelect = document.getElementById('paperNumber');
         const searchBtn = document.getElementById('searchBtn');
         const resultDiv = document.getElementById('result');
         const scannerBtn = document.getElementById('scannerBtn');
-
-        // NEW MODAL ELEMENTS
         const scannerModal = document.getElementById('scanner-modal');
         const scannerVideo = document.getElementById('scanner-video');
         const scannerStatus = document.getElementById('scanner-status');
         const closeScannerBtn = document.getElementById('close-scanner');
-
         const qrIconSVG = `<svg class="w-5 h-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5A.75.75 0 014.5 3.75h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-4.5a.75.75 0 01-.75-.75v-4.5zM3.75 15A.75.75 0 014.5 14.25h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-4.5a.75.75 0 01-.75-.75v-4.5zM15 3.75A.75.75 0 0014.25 3h-4.5a.75.75 0 00-.75.75v4.5a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75v-4.5zM15 15h.008v.008H15V15zm.75 2.25h.008v.008H15.75v-.008zm2.25.008h.008v.008h-.008v-.008zm2.25-2.25h.008v.008H20.25V15z" /></svg>`;
         
+        // --- STATE MANAGEMENT ---
         let dataCache = {};
         let qrScanner = null;
 
-        // --- ENTIRE SCANNER LOGIC IS REWRITTEN ---
-
+        // --- SCANNER FUNCTIONS ---
         function stopScanner() {
             if (qrScanner) {
                 qrScanner.stop();
@@ -170,19 +167,7 @@
             }
         }
 
-        async function loadData(paper) { /* ... (This function remains unchanged) ... */ }
-        async function findBucket() { /* ... (This function remains unchanged) ... */ }
-        function displayResult(message, type) { /* ... (This function remains unchanged) ... */ }
-
-        // --- EVENT LISTENERS ---
-        scannerBtn.innerHTML = qrIconSVG;
-        searchBtn.addEventListener('click', findBucket);
-        scannerBtn.addEventListener('click', startScanner);
-        closeScannerBtn.addEventListener('click', stopScanner);
-
-    </script>
-    <script>
-        // --- Keep these data and search functions separate for clarity ---
+        // --- DATA AND SEARCH FUNCTIONS ---
         async function loadData(paper) {
             if (dataCache[paper]) return dataCache[paper];
             const url = allPaperData[paper];
@@ -217,17 +202,17 @@
             resultDiv.innerHTML = '';
             if (!paperNumber) {
                 displayResult('Please select a paper number.', 'error');
-return;
+                return;
             }
             if (!studentId) {
                 displayResult('Please enter a Student ID.', 'error');
-return;
+                return;
             }
             displayResult('Searching...', 'loading');
             const data = await loadData(paperNumber);
             if (data === null) {
                 displayResult(`Data for paper "${paperNumber}" could not be loaded. Check link.`, 'error');
-return;
+                return;
             }
             const bucket = data.get(studentId);
             if (bucket) {
@@ -250,6 +235,13 @@ return;
             card.innerHTML = message;
             resultDiv.appendChild(card);
         }
+
+        // --- INITIALIZATION ---
+        scannerBtn.innerHTML = qrIconSVG;
+        searchBtn.addEventListener('click', findBucket);
+        scannerBtn.addEventListener('click', startScanner);
+        closeScannerBtn.addEventListener('click', stopScanner);
+
     </script>
 </body>
 </html>
