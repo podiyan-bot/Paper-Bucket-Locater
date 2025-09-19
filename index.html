@@ -61,6 +61,7 @@
                 <label for="paperNumber" class="block text-sm font-medium text-slate-700">Paper Number</label>
                 <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                     <option value="">-- Select Paper --</option>
+                    <option value="ETP03">Exam Target Paper 03</option>
                     <option value="26P33">2026 Paper 33</option>
                     <option value="ETP02">Exam Target Paper 02</option>
                     <option value="26P32">2026 Paper 32</option>
@@ -104,7 +105,8 @@
             '26P31': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwUMlEsLsT-9ohzrh_xp87ZRaJWERP-yCxeBDeziszBuCBIdqavANEqhLx9PvVlN4prAUooaWbYcIz/pub?output=csv',
             '26P32': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPvwmZVxZthzg7sRlY3lyyP3qYOv265kXIdkmsioDRETmgMSnmjK5Lrf2GyTvJW6E-u3n-EueBY0AQ/pub?output=csv',
             'ETP02': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeqN_XoxDhOadV32eU9IlP4I1KGCAp_KBNUE8SayLkYchN8h1iZO-frhNh9WzHQLDKNiByGcuQtYHx/pub?output=csv',
-            '26P33': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS_dYghNbvk--9o2LnkqOcZ3juCoomvkavXRe9IY1x_csmKXKfLDmsN-FwDfU5vXmgugMyiUj0T5We8/pub?output=csv'
+            '26P33': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS_dYghNbvk--9o2LnkqOcZ3juCoomvkavXRe9IY1x_csmKXKfLDmsN-FwDfU5vXmgugMyiUj0T5We8/pub?output=csv',
+            'ETP03': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9RygITNrZ3cCjfXP5-cOWPXBG05U_9o5KYxBE_88gr3FNKd4I7-NAkpqircR8M7_KwzCybtED7wp5/pub?output=csv'
         };
 
         // --- ELEMENT REFERENCES ---
@@ -183,6 +185,12 @@
                 if (!response.ok) return null;
                 const csvText = await response.text();
                 const lines = csvText.trim().replace(/\r/g, "").split('\n');
+
+                // If the paper is ETP03, ignore the first line which is a header.
+                if (paper === 'ETP03') {
+                    lines.shift(); // Removes the first element (the header row)
+                }
+
                 const studentToBucketMap = new Map();
                 if (lines.length < 1) return studentToBucketMap;
                 const buckets = lines[0].split(',').map(b => b.trim());
