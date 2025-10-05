@@ -47,6 +47,11 @@
             cursor: pointer;
             font-weight: bold;
         }
+        /* Style for disabled dropdown */
+        select:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
@@ -57,21 +62,21 @@
 
         <!-- Main Form -->
         <div class="space-y-4">
+            <!-- NEW BATCH SELECTION -->
+            <div>
+                <label for="batchSelect" class="block text-sm font-medium text-slate-700">Batch</label>
+                <select id="batchSelect" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="">-- Select Batch --</option>
+                    <option value="25A/L">25 A/L</option>
+                    <option value="26A/L">26 A/L</option>
+                    <option value="27A/L">27 A/L</option>
+                </select>
+            </div>
+            
             <div>
                 <label for="paperNumber" class="block text-sm font-medium text-slate-700">Paper Number</label>
-                <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <option value="">-- Select Paper --</option>
-                    <option value="26P35">2026 Paper 35</option>
-                    <option value="ETP05">Exam Target Paper 05</option>
-                    <option value="26P34">2026 Paper 34</option>
-                    <option value="ETP04">Exam Target Paper 04</option>
-                    <option value="ETP03">Exam Target Paper 03</option>
-                    <option value="26P33">2026 Paper 33</option>
-                    <option value="ETP02">Exam Target Paper 02</option>
-                    <option value="26P32">2026 Paper 32</option>
-                    <option value="26P31">2026 Paper 31</option>
-                    <option value="ETP01">Exam Target Paper 01</option>
-                    <option value="FP8">Final Paper 8</option>
+                <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+                    <option value="">-- Select Batch First --</option>
                 </select>
             </div>
 
@@ -103,22 +108,28 @@
     <!-- SINGLE, CONSOLIDATED SCRIPT SECTION -->
     <script>
         // --- CONFIGURATION ---
-        const allPaperData = {
-            'FP8': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv',
-            'ETP01': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRN6ee55zSKhHp7GmpgUl1uq27QftOmReWGAmLtfsDAJJsVPQUcxGRYU_4ZVBqGUmYE2tC0SfJj2dff/pub?output=csv',
-            '26P31': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwUMlEsLsT-9ohzrh_xp87ZRaJWERP-yCxeBDeziszBuCBIdqavANEqhLx9PvVlN4prAUooaWbYcIz/pub?output=csv',
-            '26P32': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPvwmZVxZthzg7sRlY3lyyP3qYOv265kXIdkmsioDRETmgMSnmjK5Lrf2GyTvJW6E-u3n-EueBY0AQ/pub?output=csv',
-            'ETP02': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeqN_XoxDhOadV32eU9IlP4I1KGCAp_KBNUE8SayLkYchN8h1iZO-frhNh9WzHQLDKNiByGcuQtYHx/pub?output=csv',
-            '26P33': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS_dYghNbvk--9o2LnkqOcZ3juCoomvkavXRe9IY1x_csmKXKfLDmsN-FwDfU5vXmgugMyiUj0T5We8/pub?output=csv',
-            'ETP03': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9RygITNrZ3cCjfXP5-cOWPXBG05U_9o5KYxBE_88gr3FNKd4I7-NAkpqircR8M7_KwzCybtED7wp5/pub?output=csv',
-            'ETP04': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0KsCdP-rQXjhGX7ymyQyGelDA0j2S8GixuDopZwu4AZ6aX0gZ6VP3tsw0028832mcDU-A68ZxdiAx/pub?output=csv',
-            '26P34': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQPROY51FEopw5S1Y8PCgTT58NAg_bS72AF1BvBxxSNp7fVrevLCOgPK0c_MZZob5xoQSSKbZI4OKU/pub?output=csv',
-            'ETP05': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRUEIjGHvqZSoPKOvmj5dQw60VWX9fy7i6Q_QXOcaV1ZFzI2W-PFMvOjyEaSdrAFI0C6LXKkrMQZ09j/pub?output=csv',
-            '26P35': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuu4xMNh9dnaId9rpxH-63WReRENsGty_9Q7_UiXEFNNv7d_Iqc-dQSIpaH32ELVA4mET5lhJ9UvfP/pub?output=csv'
+        const paperDatabase = {
+            '25A/L': [
+                { id: 'ETP05', name: 'Exam Target Paper 05', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRUEIjGHvqZSoPKOvmj5dQw60VWX9fy7i6Q_QXOcaV1ZFzI2W-PFMvOjyEaSdrAFI0C6LXKkrMQZ09j/pub?output=csv' },
+                { id: 'ETP04', name: 'Exam Target Paper 04', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0KsCdP-rQXjhGX7ymyQyGelDA0j2S8GixuDopZwu4AZ6aX0gZ6VP3tsw0028832mcDU-A68ZxdiAx/pub?output=csv' },
+                { id: 'ETP03', name: 'Exam Target Paper 03', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9RygITNrZ3cCjfXP5-cOWPXBG05U_9o5KYxBE_88gr3FNKd4I7-NAkpqircR8M7_KwzCybtED7wp5/pub?output=csv' },
+                { id: 'ETP02', name: 'Exam Target Paper 02', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeqN_XoxDhOadV32eU9IlP4I1KGCAp_KBNUE8SayLkYchN8h1iZO-frhNh9WzHQLDKNiByGcuQtYHx/pub?output=csv' },
+                { id: 'ETP01', name: 'Exam Target Paper 01', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRN6ee55zSKhHp7GmpgUl1uq27QftOmReWGAmLtfsDAJJsVPQUcxGRYU_4ZVBqGUmYE2tC0SfJj2dff/pub?output=csv' },
+                { id: 'FP8', name: 'Final Paper 8', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkuoz1ff3Ico2vUVgSz75AR7Oo4UGv2--sdz-o3WiattN5i14y5i6f6R3GTWKLVrXGBtX8ALKKcQo_/pub?output=csv' }
+            ],
+            '26A/L': [
+                { id: '26P35', name: '2026 Paper 35', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuu4xMNh9dnaId9rpxH-63WReRENsGty_9Q7_UiXEFNNv7d_Iqc-dQSIpaH32ELVA4mET5lhJ9UvfP/pub?output=csv' },
+                { id: '26P34', name: '2026 Paper 34', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQPROY51FEopw5S1Y8PCgTT58NAg_bS72AF1BvBxxSNp7fVrevLCOgPK0c_MZZob5xoQSSKbZI4OKU/pub?output=csv' },
+                { id: '26P33', name: '2026 Paper 33', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS_dYghNbvk--9o2LnkqOcZ3juCoomvkavXRe9IY1x_csmKXKfLDmsN-FwDfU5vXmgugMyiUj0T5We8/pub?output=csv' },
+                { id: '26P32', name: '2026 Paper 32', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPvwmZVxZthzg7sRlY3lyyP3qYOv265kXIdkmsioDRETmgMSnmjK5Lrf2GyTvJW6E-u3n-EueBY0AQ/pub?output=csv' },
+                { id: '26P31', name: '2026 Paper 31', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwUMlEsLsT-9ohzrh_xp87ZRaJWERP-yCxeBDeziszBuCBIdqavANEqhLx9PvVlN4prAUooaWbYcIz/pub?output=csv' }
+            ],
+            '27A/L': []
         };
-
+        
         // --- ELEMENT REFERENCES ---
         const studentIdInput = document.getElementById('studentId');
+        const batchSelect = document.getElementById('batchSelect');
         const paperNumberSelect = document.getElementById('paperNumber');
         const searchBtn = document.getElementById('searchBtn');
         const resultDiv = document.getElementById('result');
@@ -132,9 +143,120 @@
         // --- STATE MANAGEMENT ---
         let dataCache = {};
         let qrScanner = null;
-        const papersWithHeaders = ['ETP03', '26P34']; // Papers that have a title in the first row to be ignored
+        const papersWithHeaders = ['ETP03', '26P34'];
+
+        // --- DYNAMIC DROPDOWN LOGIC ---
+        function populatePaperNumbers() {
+            const selectedBatch = batchSelect.value;
+            paperNumberSelect.innerHTML = ''; // Clear existing options
+
+            if (selectedBatch) {
+                paperNumberSelect.disabled = false;
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select Paper --';
+                paperNumberSelect.appendChild(defaultOption);
+
+                const papers = paperDatabase[selectedBatch];
+                papers.forEach(paper => {
+                    const option = document.createElement('option');
+                    option.value = paper.id;
+                    option.textContent = paper.name;
+                    paperNumberSelect.appendChild(option);
+                });
+            } else {
+                paperNumberSelect.disabled = true;
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select Batch First --';
+                paperNumberSelect.appendChild(defaultOption);
+            }
+        }
 
         // --- SCANNER FUNCTIONS ---
+        function stopScanner() { /* Unchanged */ }
+        async function startScanner() { /* Unchanged */ }
+
+        // --- DATA AND SEARCH FUNCTIONS ---
+        async function loadData(batch, paperId) {
+            const cacheKey = `${batch}-${paperId}`;
+            if (dataCache[cacheKey]) return dataCache[cacheKey];
+
+            const papers = paperDatabase[batch];
+            const paperInfo = papers.find(p => p.id === paperId);
+            if (!paperInfo || !paperInfo.url) return null;
+            
+            const url = paperInfo.url;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                const csvText = await response.text();
+                const allLines = csvText.trim().replace(/\r/g, "").split('\n');
+                
+                const dataLines = papersWithHeaders.includes(paperId) ? allLines.slice(1) : allLines;
+
+                const studentToBucketMap = new Map();
+                if (dataLines.length < 1) return studentToBucketMap;
+
+                const buckets = dataLines[0].split(',').map(b => b.trim());
+                for (let i = 1; i < dataLines.length; i++) {
+                    const studentIdsInRow = dataLines[i].split(',').map(id => id.trim());
+                    for (let j = 0; j < buckets.length; j++) {
+                        if (studentIdsInRow[j]) {
+                            studentToBucketMap.set(studentIdsInRow[j], buckets[j]);
+                        }
+                    }
+                }
+                dataCache[cacheKey] = studentToBucketMap;
+                return studentToBucketMap;
+            } catch (error) {
+                console.error('Error fetching/parsing data:', error);
+                return null;
+            }
+        }
+
+        async function findBucket() {
+            const studentId = studentIdInput.value.trim();
+            const selectedBatch = batchSelect.value;
+            const paperId = paperNumberSelect.value;
+            resultDiv.innerHTML = '';
+
+            if (!selectedBatch) {
+                displayResult('Please select a batch.', 'error');
+                return;
+            }
+            if (!paperId) {
+                displayResult('Please select a paper number.', 'error');
+                return;
+            }
+            if (!studentId) {
+                displayResult('Please enter a Student ID.', 'error');
+                return;
+            }
+            displayResult('Searching...', 'loading');
+            const data = await loadData(selectedBatch, paperId);
+            if (data === null) {
+                displayResult(`Data for paper could not be loaded. Check link.`, 'error');
+                return;
+            }
+            const bucket = data.get(studentId);
+            if (bucket) {
+                displayResult(`Student ID: <strong>${studentId}</strong><br>Found in: <span class="text-2xl font-bold text-indigo-600">${bucket}</span>`, 'success');
+            } else {
+                displayResult(`Student ID: <strong>${studentId}</strong> not found.`, 'error');
+            }
+        }
+        
+        function displayResult(message, type) { /* Unchanged */ }
+
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        scannerBtn.innerHTML = qrIconSVG;
+        batchSelect.addEventListener('change', populatePaperNumbers);
+        searchBtn.addEventListener('click', findBucket);
+        scannerBtn.addEventListener('click', startScanner);
+        closeScannerBtn.addEventListener('click', stopScanner);
+
+        // --- Keep scanner and display result functions as they are, but put them here ---
         function stopScanner() {
             if (qrScanner) {
                 qrScanner.stop();
@@ -145,6 +267,10 @@
         }
 
         async function startScanner() {
+            if (!batchSelect.value) {
+                displayResult('Please select a batch first.', 'error');
+                return;
+            }
             if (!paperNumberSelect.value) {
                 displayResult('Please select a paper first.', 'error');
                 return;
@@ -184,66 +310,6 @@
             }
         }
 
-        // --- DATA AND SEARCH FUNCTIONS ---
-        async function loadData(paper) {
-            if (dataCache[paper]) return dataCache[paper];
-            const url = allPaperData[paper];
-            if (!url || !url.startsWith('https')) return null;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) return null;
-                const csvText = await response.text();
-                const allLines = csvText.trim().replace(/\r/g, "").split('\n');
-                
-                // If the paper is in our list of papers with headers, remove the first line
-                const dataLines = papersWithHeaders.includes(paper) ? allLines.slice(1) : allLines;
-
-                const studentToBucketMap = new Map();
-                if (dataLines.length < 1) return studentToBucketMap;
-
-                const buckets = dataLines[0].split(',').map(b => b.trim());
-                for (let i = 1; i < dataLines.length; i++) {
-                    const studentIdsInRow = dataLines[i].split(',').map(id => id.trim());
-                    for (let j = 0; j < buckets.length; j++) {
-                        if (studentIdsInRow[j]) {
-                            studentToBucketMap.set(studentIdsInRow[j], buckets[j]);
-                        }
-                    }
-                }
-                dataCache[paper] = studentToBucketMap;
-                return studentToBucketMap;
-            } catch (error) {
-                console.error('Error fetching/parsing data:', error);
-                return null;
-            }
-        }
-
-        async function findBucket() {
-            const studentId = studentIdInput.value.trim();
-            const paperNumber = paperNumberSelect.value;
-            resultDiv.innerHTML = '';
-            if (!paperNumber) {
-                displayResult('Please select a paper number.', 'error');
-                return;
-            }
-            if (!studentId) {
-                displayResult('Please enter a Student ID.', 'error');
-                return;
-            }
-            displayResult('Searching...', 'loading');
-            const data = await loadData(paperNumber);
-            if (data === null) {
-                displayResult(`Data for paper "${paperNumber}" could not be loaded. Check link.`, 'error');
-                return;
-            }
-            const bucket = data.get(studentId);
-            if (bucket) {
-                displayResult(`Student ID: <strong>${studentId}</strong><br>Found in: <span class="text-2xl font-bold text-indigo-600">${bucket}</span>`, 'success');
-            } else {
-                displayResult(`Student ID: <strong>${studentId}</strong> not found.`, 'error');
-            }
-        }
-        
         function displayResult(message, type) {
             resultDiv.innerHTML = '';
             let cardClasses = 'result-card p-4 rounded-lg mt-4 text-center ';
@@ -257,12 +323,6 @@
             card.innerHTML = message;
             resultDiv.appendChild(card);
         }
-
-        // --- INITIALIZATION ---
-        scannerBtn.innerHTML = qrIconSVG;
-        searchBtn.addEventListener('click', findBucket);
-        scannerBtn.addEventListener('click', startScanner);
-        closeScannerBtn.addEventListener('click', stopScanner);
 
     </script>
 </body>
