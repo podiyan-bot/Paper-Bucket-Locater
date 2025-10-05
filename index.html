@@ -61,6 +61,8 @@
                 <label for="paperNumber" class="block text-sm font-medium text-slate-700">Paper Number</label>
                 <select id="paperNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                     <option value="">-- Select Paper --</option>
+                    <option value="ETP05">Exam Target Paper 05</option>
+                    <option value="26P34">2026 Paper 34</option>
                     <option value="ETP04">Exam Target Paper 04</option>
                     <option value="ETP03">Exam Target Paper 03</option>
                     <option value="26P33">2026 Paper 33</option>
@@ -108,7 +110,9 @@
             'ETP02': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeqN_XoxDhOadV32eU9IlP4I1KGCAp_KBNUE8SayLkYchN8h1iZO-frhNh9WzHQLDKNiByGcuQtYHx/pub?output=csv',
             '26P33': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS_dYghNbvk--9o2LnkqOcZ3juCoomvkavXRe9IY1x_csmKXKfLDmsN-FwDfU5vXmgugMyiUj0T5We8/pub?output=csv',
             'ETP03': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9RygITNrZ3cCjfXP5-cOWPXBG05U_9o5KYxBE_88gr3FNKd4I7-NAkpqircR8M7_KwzCybtED7wp5/pub?output=csv',
-            'ETP04': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0KsCdP-rQXjhGX7ymyQyGelDA0j2S8GixuDopZwu4AZ6aX0gZ6VP3tsw0028832mcDU-A68ZxdiAx/pub?output=csv'
+            'ETP04': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0KsCdP-rQXjhGX7ymyQyGelDA0j2S8GixuDopZwu4AZ6aX0gZ6VP3tsw0028832mcDU-A68ZxdiAx/pub?output=csv',
+            '26P34': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQPROY51FEopw5S1Y8PCgTT58NAg_bS72AF1BvBxxSNp7fVrevLCOgPK0c_MZZob5xoQSSKbZI4OKU/pub?output=csv',
+            'ETP05': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRUEIjGHvqZSoPKOvmj5dQw60VWX9fy7i6Q_QXOcaV1ZFzI2W-PFMvOjyEaSdrAFI0C6LXKkrMQZ09j/pub?output=csv'
         };
 
         // --- ELEMENT REFERENCES ---
@@ -126,6 +130,7 @@
         // --- STATE MANAGEMENT ---
         let dataCache = {};
         let qrScanner = null;
+        const papersWithHeaders = ['ETP03', '26P34']; // Papers that have a title in the first row to be ignored
 
         // --- SCANNER FUNCTIONS ---
         function stopScanner() {
@@ -186,18 +191,17 @@
                 const response = await fetch(url);
                 if (!response.ok) return null;
                 const csvText = await response.text();
-                const lines = csvText.trim().replace(/\r/g, "").split('\n');
-
-                // If the paper is ETP03, ignore the first line which is a header.
-                if (paper === 'ETP03') {
-                    lines.shift(); // Removes the first element (the header row)
-                }
+                const allLines = csvText.trim().replace(/\r/g, "").split('\n');
+                
+                // If the paper is in our list of papers with headers, remove the first line
+                const dataLines = papersWithHeaders.includes(paper) ? allLines.slice(1) : allLines;
 
                 const studentToBucketMap = new Map();
-                if (lines.length < 1) return studentToBucketMap;
-                const buckets = lines[0].split(',').map(b => b.trim());
-                for (let i = 1; i < lines.length; i++) {
-                    const studentIdsInRow = lines[i].split(',').map(id => id.trim());
+                if (dataLines.length < 1) return studentToBucketMap;
+
+                const buckets = dataLines[0].split(',').map(b => b.trim());
+                for (let i = 1; i < dataLines.length; i++) {
+                    const studentIdsInRow = dataLines[i].split(',').map(id => id.trim());
                     for (let j = 0; j < buckets.length; j++) {
                         if (studentIdsInRow[j]) {
                             studentToBucketMap.set(studentIdsInRow[j], buckets[j]);
