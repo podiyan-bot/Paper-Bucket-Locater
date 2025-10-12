@@ -83,7 +83,8 @@
             <div>
                 <label for="studentId" class="block text-sm font-medium text-slate-700">Student ID</label>
                 <div class="mt-1 flex items-center rounded-md shadow-sm">
-                    <input type="text" id="studentId" class="block w-full flex-grow rounded-none rounded-l-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Type or scan...">
+                    <!-- MODIFIED INPUT FIELD FOR NUMERIC KEYPAD -->
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="studentId" class="block w-full flex-grow rounded-none rounded-l-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Type or scan...">
                     <button id="scannerBtn" type="button" class="relative -ml-px inline-flex items-center justify-center space-x-2 rounded-r-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <!-- Icon will be inserted here -->
                     </button>
@@ -175,8 +176,58 @@
         }
 
         // --- SCANNER FUNCTIONS ---
-        function stopScanner() { /* Unchanged */ }
-        async function startScanner() { /* Unchanged */ }
+        function stopScanner() {
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner.destroy();
+                qrScanner = null;
+            }
+            scannerModal.style.display = 'none';
+        }
+
+        async function startScanner() {
+            if (!batchSelect.value) {
+                displayResult('Please select a batch first.', 'error');
+                return;
+            }
+            if (!paperNumberSelect.value) {
+                displayResult('Please select a paper first.', 'error');
+                return;
+            }
+             if (location.protocol !== 'https:') {
+                displayResult('Error: Camera requires a secure (https) connection.', 'error');
+                return;
+            }
+
+            scannerStatus.textContent = "Starting camera...";
+            scannerModal.style.display = 'flex';
+
+            const onScanSuccess = result => {
+                studentIdInput.value = result.data;
+                stopScanner();
+                displayResult('Student ID captured. Click "Find Bucket" to search.', 'success');
+            };
+
+            const onScanError = error => {
+                scannerStatus.textContent = `Scan Error: ${error || 'Unknown error'}`;
+                console.error(error);
+            };
+
+            qrScanner = new QrScanner(scannerVideo, onScanSuccess, {
+                onDecodeError: onScanError,
+                preferredCamera: 'environment',
+                highlightScanRegion: true,
+                highlightCodeOutline: true,
+            });
+
+            try {
+                await qrScanner.start();
+                scannerStatus.textContent = "Point camera at a QR code.";
+            } catch (error) {
+                scannerStatus.textContent = "Could not start camera. Please grant permission in your browser settings.";
+                console.error(error);
+            }
+        }
 
         // --- DATA AND SEARCH FUNCTIONS ---
         async function loadData(batch, paperId) {
@@ -248,69 +299,6 @@
             }
         }
         
-        function displayResult(message, type) { /* Unchanged */ }
-
-        // --- INITIALIZATION & EVENT LISTENERS ---
-        scannerBtn.innerHTML = qrIconSVG;
-        batchSelect.addEventListener('change', populatePaperNumbers);
-        searchBtn.addEventListener('click', findBucket);
-        scannerBtn.addEventListener('click', startScanner);
-        closeScannerBtn.addEventListener('click', stopScanner);
-
-        // --- Keep scanner and display result functions as they are, but put them here ---
-        function stopScanner() {
-            if (qrScanner) {
-                qrScanner.stop();
-                qrScanner.destroy();
-                qrScanner = null;
-            }
-            scannerModal.style.display = 'none';
-        }
-
-        async function startScanner() {
-            if (!batchSelect.value) {
-                displayResult('Please select a batch first.', 'error');
-                return;
-            }
-            if (!paperNumberSelect.value) {
-                displayResult('Please select a paper first.', 'error');
-                return;
-            }
-             if (location.protocol !== 'https:') {
-                displayResult('Error: Camera requires a secure (https) connection.', 'error');
-                return;
-            }
-
-            scannerStatus.textContent = "Starting camera...";
-            scannerModal.style.display = 'flex';
-
-            const onScanSuccess = result => {
-                studentIdInput.value = result.data;
-                stopScanner();
-                displayResult('Student ID captured. Click "Find Bucket" to search.', 'success');
-            };
-
-            const onScanError = error => {
-                scannerStatus.textContent = `Scan Error: ${error || 'Unknown error'}`;
-                console.error(error);
-            };
-
-            qrScanner = new QrScanner(scannerVideo, onScanSuccess, {
-                onDecodeError: onScanError,
-                preferredCamera: 'environment',
-                highlightScanRegion: true,
-                highlightCodeOutline: true,
-            });
-
-            try {
-                await qrScanner.start();
-                scannerStatus.textContent = "Point camera at a QR code.";
-            } catch (error) {
-                scannerStatus.textContent = "Could not start camera. Please grant permission in your browser settings.";
-                console.error(error);
-            }
-        }
-
         function displayResult(message, type) {
             resultDiv.innerHTML = '';
             let cardClasses = 'result-card p-4 rounded-lg mt-4 text-center ';
@@ -325,6 +313,12 @@
             resultDiv.appendChild(card);
         }
 
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        scannerBtn.innerHTML = qrIconSVG;
+        batchSelect.addEventListener('change', populatePaperNumbers);
+        searchBtn.addEventListener('click', findBucket);
+        scannerBtn.addEventListener('click', startScanner);
+        closeScannerBtn.addEventListener('click', stopScanner);
     </script>
 </body>
 </html>
